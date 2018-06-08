@@ -22,7 +22,8 @@ mongoose.accounts = mongoose.createConnection(config.mongo.accounts.uri, {useMon
 
 
 const accountModel = require('./models/accountModel'),
-  requests = require('./services/nodeRequests'),
+  UserCreatedService = require('./services/UserCreatedService'),
+  updateBalance = require('./utils/updateBalance'),
   bunyan = require('bunyan'),
   log = bunyan.createLogger({name: 'core.balanceProcessor'}),
   amqp = require('amqplib');
@@ -37,33 +38,20 @@ const processTx = async (tx, channel) => {
   const txAccounts = _.filter([tx.sender, tx.recipient], item => item !== undefined);        
   let accounts = tx ? await accountModel.find({address: {$in: txAccounts}}) : [];
   for (let account of accounts) {
-    if (!tx.assetId) {
-      const balance = await requests.getBalanceByAddress(account.address);
-      account = await accountModel.findOneAndUpdate(
-        {address: account.address}, 
-        {$set: {balance: balance}}, 
-        {upsert: true, new: true}
-      ).catch(log.error);
-      
-    } else {
-      const balance = await requests.getBalanceByAddress(account.address);          
-      const assetBalance = await requests.getBalanceByAddressAndAsset(account.address, tx.assetId);
-      account = await accountModel.findOneAndUpdate({address: account.address},
-        {$set: {
-          balance: balance,
-          assets: {
-            [`${tx.assetId}`]: assetBalance
-          }
-        }}, {upsert: true, new: true})
-        .catch(log.error);
-      
-    }
-    await  channel.publish('events', `${config.rabbit.serviceName}_balance.${account.address}`, new Buffer(JSON.stringify({
-      address: account.address,
-      balance: account.balance,
-      assets: account.assets,
-      tx: tx
-    })));
+    if (!tx.assetId)
+      account = await updateBalance(account.address);
+    else 
+      account = await updateBalance(account.address, tx.assetId);
+
+    await  channel.publish('events', 
+      `${config.rabbit.serviceName}_balance.${account.address}`, 
+      new Buffer(JSON.stringify(
+        _.chain(account)
+          .pick(['address', 'balance', 'assets'])
+          .merge({tx: tx.hash})
+          .value()
+      ))
+    );
   }
 };
 
@@ -88,6 +76,9 @@ let init = async () => {
     process.exit(0);
   });
 
+  const userCreatedService = new UserCreatedService(channel, config.rabbit.serviceName);
+  await userCreatedService.start();
+
   await channel.assertExchange('events', 'topic', {durable: false});
   await channel.assertQueue(`app_${config.rabbit.serviceName}.balance_processor`);
   await channel.bindQueue(`app_${config.rabbit.serviceName}.balance_processor`, 'events', `${config.rabbit.serviceName}_transaction.*`);
@@ -96,7 +87,7 @@ let init = async () => {
   channel.consume(`app_${config.rabbit.serviceName}.balance_processor`, async (data) => {
     try {
       let tx = JSON.parse(data.content.toString());
-      log.info('balance', tx.id);
+      log.info('balance', tx.hash);
       if (tx.blockNumber !== -1) 
         await processTx(tx, channel);
     } catch (e) {

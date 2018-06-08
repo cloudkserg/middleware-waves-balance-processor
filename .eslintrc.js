@@ -10,7 +10,7 @@ module.exports = {
     "no-console": 1,
     "no-unused-vars": 1,
     "curly": ["error", "multi"],
-    "no-empty": ["error", {"allowEmptyCatch": true}]
+    "no-empty": ["error", { "allowEmptyCatch": true }]
   },
   "parserOptions": {
     "ecmaVersion": 8

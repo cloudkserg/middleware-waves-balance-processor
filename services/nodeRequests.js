@@ -57,9 +57,24 @@ const getBalanceByAddressAndAsset = async (address, assetId) => {
   return _.get(result, 'balance', null);
 };
 
+/**
+ * 
+ * @param {String} address 
+ * @return {[{balance: Number, assetId: Number}]}
+ */
+const getAllAssetBalanceByAddress = async (address) => {
+  const result = await get(`/assets/balance/${address}`);
+  return _.get(result, 'balances', [])
+    .reduce((balances, balance) => { 
+      balances[_.get(balance, 'assetId')] = _.get(balance, 'balance'); 
+      return balances; 
+    }, {});
+};
+
 
 
 module.exports = {
   getBalanceByAddress,
+  getAllAssetBalanceByAddress,
   getBalanceByAddressAndAsset
 };

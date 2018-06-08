@@ -20,6 +20,7 @@ const privatePost = (query, body, apiKey) => makeRequest(query, 'POST', body, {
   'X-API-Key': apiKey
 });
 
+const get = query => makeRequest(query, 'GET');
 
 const makeRequest = (path, method, body, headers = {}) => {
   const options = {
@@ -38,6 +39,10 @@ const errorHandler = async (err) => {
   log.error(err);
 };
 
+const getTransaction = async (id) => {
+  const result = await get(`/transactions/info/${id}`);
+  return result;
+};
 
 /**
  * 
@@ -154,6 +159,7 @@ const sendAliasTransaction = async (apiKey, tx) => {
 
 
 
+
 module.exports = _.merge(nodeRequests, {
   //for tests only
   signTransaction,
@@ -164,5 +170,6 @@ module.exports = _.merge(nodeRequests, {
   sendAssetTransaction,
 
   signAliasTransaction,
-  sendAliasTransaction
+  sendAliasTransaction,
+  getTransaction
 });

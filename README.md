@@ -21,24 +21,31 @@ for changed accounts. After middleware send message throught rabbitmq with the f
 { address: '3JfE6tjeT7PnpuDQKxiVNLn4TJUFhuMaaT5',
  balance: '1028000004216500',
  assets: { '8V15mJPWMiriHQZwrjLGAoQNP84yutotnSmVrFKBGFtZ': 10000000 },
- tx: { 
-    type: 4,
-    id: 'FBrL9hxvTivF6o4RS6vP7UKsUyHcEFS5bZLph7o6C8Qk',
-    sender: '3JfE6tjeT7PnpuDQKxiVNLn4TJUFhuMaaT5',
-    senderPublicKey: 'GbGEY3XVc2ohdv6hQBukVKSTQyqP8rjQ8Kigkj6bL57S',
-    fee: 100000,
-    timestamp: 1528221884910,
-    signature: '56FFotc1da4wr4SrGZ85qGH3E9XrbVawyUVQGF3HWcZfmZw5PQLkgYPDZWcp45xseU1Sr2RjLt6WHrPXf7imgGz5',
-    recipient: '3Jk2fh8aMBmhCQCkBcUfKBSEEa3pDMkDjCr',
-    assetId: null,
-    amount: 100,
-    feeAsset: null,
-    attachment: 'string',
-    blockNumber: 4925,
-    hash: '56FFotc1da4wr4SrGZ85qGH3E9XrbVawyUVQGF3HWcZfmZw5PQLkgYPDZWcp45xseU1Sr2RjLt6WHrPXf7imgGz5',
-    address: '3JfE6tjeT7PnpuDQKxiVNLn4TJUFhuMaaT5' 
- } 
+ tx: '56FFotc1da4wr4SrGZ85qGH3E9XrbVawyUVQGF3HWcZfmZw5PQLkgYPDZWcp45xseU1Sr2RjLt6WHrPXf7imgGz5'
 }
+```
+
+
+### Update user balance, when created
+
+When user is created new in database, while not get transaction with this account,
+him balance not updated.
+That fixed this problem, need to send message to rabbit mq after created user
+in database
+
+exchange name
+```
+internal
+```
+
+queue name
+```
+<config_rabbit_service_name>_user.created
+```
+
+message structure, where address is user address, that created in db
+```
+{address: <String>}
 ```
 
 
