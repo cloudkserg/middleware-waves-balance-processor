@@ -52,7 +52,7 @@ describe('core/balanceProcessor', function () {
     await providerService.setRabbitmqChannel(ctx.amqp.channel, config.rabbit.serviceName);
 
     ctx.checkerPid = spawn('node', ['tests/utils/proxyChecker.js'], {
-      env: process.env, stdio: 'ignore'
+      env: process.env, stdio: 'inherit'
     });
     await Promise.delay(5000);
   });
@@ -66,11 +66,7 @@ describe('core/balanceProcessor', function () {
 
 
   describe('block', () => blockTests(ctx));
-
-  describe('performance', () => performanceTests(ctx));
-
-
   describe('features', () => featuresTests(ctx));
   describe('fuzz', () => fuzzTests(ctx));
-
+  describe('performance', () => performanceTests(ctx));
 });
