@@ -5,7 +5,7 @@
  */
 const amqp = require('amqplib'),
   _ =require('lodash'),
-  config = require('../../config');
+  config = require('../config');
 
 
 const main = async () => {
@@ -21,7 +21,7 @@ const main = async () => {
             if (!msg)
               return;
             const content = JSON.parse(msg.content);
-           const version = content.version;
+            const version = content.version;
             await channel.publish(config.rabbit.exchange, 
               `${config.systemRabbit.serviceName}.${k}.checked`, new Buffer(JSON.stringify({version})));
       });
